@@ -106,7 +106,7 @@ def montar_descricao(materia: dict, tramitacao: dict, prazo_info: dict) -> str:
     if tramitacao:
         linhas += [
             f"- Data: {tramitacao.get('data_tramitacao', 'N/D')}",
-            f"- Unidade: {tramitacao.get('unidade_tramitacao_destino', {}).get('comissao', {}).get('nome', '') or tramitacao.get('unidade_tramitacao_destino', {}).get('orgao', {}).get('nome', '') or 'N/D'}",
+            f"- Unidade: {(tramitacao.get('unidade_tramitacao_destino') or {}).get('comissao', {}).get('nome', '') if isinstance(tramitacao.get('unidade_tramitacao_destino'), dict) else 'N/D'}",
             f"- Status: {tramitacao.get('status', {}).get('descricao', 'N/D') if isinstance(tramitacao.get('status'), dict) else 'N/D'}",
             f"- Turno: {tramitacao.get('turno', 'N/D')}",
         ]
@@ -200,7 +200,10 @@ def sincronizar():
                 status_tram = tram.get("status", {})
                 ultima_tram_texto = status_tram.get("descricao", "") if isinstance(status_tram, dict) else ""
 
-            campos = clickup.montar_campos_sapl(
+            # Busca IDs dos campos customizados (pode estar vazio se não configurados)
+            campos = []
+            if ids_campos:
+              campos = clickup.montar_campos_sapl(
                 numero_sapl=f"{materia['numero']}/{materia['ano']}",
                 tipo=f"{tipo_sigla} — {materia['tipo_descricao']}",
                 ementa=materia["ementa"],
@@ -211,7 +214,7 @@ def sincronizar():
                 url_sapl=materia["url_sapl"],
                 sapl_id=sapl_id,
                 ids_campos=ids_campos,
-            )
+              )
 
             # Verificar se tarefa já existe
             tarefa_existente = clickup.buscar_tarefa_por_sapl_id(list_id, sapl_id)

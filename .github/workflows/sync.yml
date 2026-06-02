@@ -1,0 +1,78 @@
+name: SAPL → ClickUp Sync
+
+on:
+  schedule:
+    # Roda a cada 30 minutos (horário UTC — BRT = UTC-3)
+    # Para rodar às 06:00 BRT = 09:00 UTC, use: '0 9 * * *'
+    - cron: '*/30 * * * *'
+
+  # Permite disparar manualmente pelo painel do GitHub
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'Modo de execução'
+        required: false
+        default: 'sync'
+        type: choice
+        options:
+          - sync
+          - apenas-alertas
+
+jobs:
+  sincronizar:
+    name: Sincronizar matérias legislativas
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Criar arquivo .env a partir dos Secrets
+        run: |
+          cat > config/.env << EOF
+          SAPL_BASE_URL=${{ secrets.SAPL_BASE_URL }}
+          CLICKUP_API_KEY=${{ secrets.CLICKUP_API_KEY }}
+          CLICKUP_TEAM_ID=${{ secrets.CLICKUP_TEAM_ID }}
+          LIST_SECRETARIA=${{ secrets.LIST_SECRETARIA }}
+          LIST_COMISSOES=${{ secrets.LIST_COMISSOES }}
+          LIST_PROCURADORIA=${{ secrets.LIST_PROCURADORIA }}
+          LIST_GABINETES=${{ secrets.LIST_GABINETES }}
+          LIST_MESA_DIRETORA=${{ secrets.LIST_MESA_DIRETORA }}
+          LIST_EXECUTIVO=${{ secrets.LIST_EXECUTIVO }}
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          DESTINATARIOS_EMAIL=${{ secrets.DESTINATARIOS_EMAIL }}
+          ALERTAR_DIAS_ANTES=7,3,1
+          SYNC_INTERVAL_MINUTES=30
+          EOF
+
+      - name: Executar sincronização
+        run: |
+          cd src
+          if [ "${{ github.event.inputs.modo }}" = "apenas-alertas" ]; then
+            python sync.py --apenas-alertas
+          else
+            python sync.py
+          fi
+
+      - name: Salvar log como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-log-${{ github.run_number }}
+          path: logs/sync.log
+          retention-days: 30

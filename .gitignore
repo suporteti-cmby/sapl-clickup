@@ -1,0 +1,23 @@
+# Credenciais — NUNCA subir para o repositório
+config/.env
+src/ids_gerados.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Logs locais
+logs/*.log
+logs/*.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# macOS
+.DS_Store

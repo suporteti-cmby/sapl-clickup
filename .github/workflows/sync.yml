@@ -60,6 +60,9 @@ jobs:
           SYNC_INTERVAL_MINUTES=30
           EOF
 
+      - name: Criar pasta de logs
+        run: mkdir -p logs
+
       - name: Executar sincronização
         run: |
           cd src

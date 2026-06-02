@@ -31,6 +31,7 @@ from alertas import AlertaEmail, AlertaTelegram, GerenciadorAlertas
 # ------------------------------------------------------------------
 # Logging
 # ------------------------------------------------------------------
+Path(__file__).parent.parent.joinpath("logs").mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(message)s",

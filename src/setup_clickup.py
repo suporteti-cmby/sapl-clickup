@@ -74,7 +74,6 @@ def criar_list(folder_id, nome_setor, api_key):
     payload = {
         "name": nome_setor,
         "content": f"Matérias legislativas — {nome_setor}",
-        "status": "active",
     }
     r = requests.post(url, json=payload, headers=headers(api_key))
     r.raise_for_status()
@@ -109,13 +108,28 @@ def criar_campos_customizados(list_id, api_key):
         print(f"      ✓ Campos criados: {', '.join(criados)}")
 
 
+def deletar_space(space_id, api_key):
+    url = f"{BASE}/space/{space_id}"
+    r = requests.delete(url, headers=headers(api_key))
+    if r.status_code in (200, 204):
+        print(f"  🗑 Space anterior deletado: {space_id}")
+    else:
+        print(f"  ⚠ Não foi possível deletar space {space_id}: {r.status_code}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Configura estrutura ClickUp para SAPL")
     parser.add_argument("--api-key",  required=True, help="Chave de API do ClickUp (pk_...)")
     parser.add_argument("--team-id",  required=True, help="ID do Workspace/Team no ClickUp")
+    parser.add_argument("--delete-space", default="", help="ID de space anterior para deletar antes de recriar")
     args = parser.parse_args()
 
     print("\n🔧 Configurando ClickUp para SAPL – Câmara de Bayeux\n")
+
+    # 0. Deletar space anterior se informado
+    if args.delete_space:
+        print("0. Removendo estrutura anterior...")
+        deletar_space(args.delete_space, args.api_key)
 
     # 1. Space
     print("1. Criando Space...")

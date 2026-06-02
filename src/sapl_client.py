@@ -55,8 +55,8 @@ class SAPLClient:
             params["ano"] = ano
         if tipo:
             params["tipo_materia"] = tipo
-        if em_tramitacao is not None:
-            params["em_tramitacao"] = "true" if em_tramitacao else "false"
+        # Filtro em_tramitacao removido da query — causa erro 500 no SAPL de Bayeux
+        # A filtragem é feita localmente em listar_todas_materias_ativas
         return self._get("materia/materialegislativa/", params)
 
     def obter_materia(self, materia_id: int) -> dict:
@@ -68,10 +68,12 @@ class SAPLClient:
         materias = []
         pagina = 1
         while True:
-            data = self.listar_materias(em_tramitacao=True, pagina=pagina)
+            data = self.listar_materias(pagina=pagina)
             resultados = data.get("results", [])
-            materias.extend(resultados)
-            logger.info(f"  SAPL: página {pagina} — {len(resultados)} matérias")
+            # Filtra localmente pois o filtro na query causa erro 500 no SAPL de Bayeux
+            ativas = [m for m in resultados if m.get("em_tramitacao", False)]
+            materias.extend(ativas)
+            logger.info(f"  SAPL: página {pagina} — {len(ativas)} matérias em tramitação (de {len(resultados)})")
             if not data.get("next"):
                 break
             pagina += 1

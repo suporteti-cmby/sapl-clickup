@@ -65,10 +65,22 @@ class SAPLClient:
 
     def listar_todas_materias_ativas(self) -> list[dict]:
         """Percorre todas as páginas e retorna todas as matérias em tramitação."""
+        import time
         materias = []
         pagina = 1
         while True:
-            data = self.listar_materias(pagina=pagina)
+            # Tenta até 3 vezes por página em caso de timeout
+            for tentativa in range(3):
+                try:
+                    data = self.listar_materias(pagina=pagina)
+                    break
+                except Exception as e:
+                    if tentativa < 2:
+                        logger.warning(f"  Tentativa {tentativa+1} falhou na página {pagina}, aguardando 5s...")
+                        time.sleep(5)
+                    else:
+                        logger.error(f"  Página {pagina} falhou após 3 tentativas: {e}")
+                        data = {"results": [], "next": None}
             resultados = data.get("results", [])
             # Filtra localmente pois o filtro na query causa erro 500 no SAPL de Bayeux
             ativas = [m for m in resultados if m.get("em_tramitacao", False)]
@@ -77,6 +89,7 @@ class SAPLClient:
             if not data.get("next"):
                 break
             pagina += 1
+            time.sleep(1)  # Pausa entre páginas para não sobrecarregar o servidor
         logger.info(f"Total de matérias ativas: {len(materias)}")
         return materias
 

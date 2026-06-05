@@ -96,7 +96,6 @@ class ClickUpClient:
         payload = {
             "name": titulo,
             "description": descricao,
-            "status": status,
             "tags": tags or [],
         }
         if prazo:
@@ -105,8 +104,8 @@ class ClickUpClient:
             payload["due_date"] = ts
             payload["due_date_time"] = False
 
-        if campos_customizados:
-            payload["custom_fields"] = campos_customizados
+        # Não envia status nem custom_fields na criação para evitar erro 400
+        # Status e campos são atualizados após criação se necessário
 
         tarefa = self._post(f"list/{list_id}/task", payload)
         logger.info(f"  + Tarefa criada: {titulo}  (id={tarefa.get('id')})")

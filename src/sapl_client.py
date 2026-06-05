@@ -14,7 +14,7 @@ SAPL_BASE = "https://sapl.bayeux.pb.leg.br"
 
 
 class SAPLClient:
-    def __init__(self, base_url: str = SAPL_BASE, timeout: int = 30):
+    def __init__(self, base_url: str = SAPL_BASE, timeout: int = 60):
         self.base = base_url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
